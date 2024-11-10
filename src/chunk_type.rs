@@ -1,5 +1,5 @@
 use core::str;
-use std::{error::Error, fmt::{write, Display}, str::FromStr, u8};
+use std::{str::FromStr, u8};
 
 fn byte_to_bits(byte: u8) -> [u8; 8] {
     let mut bits = [0u8; 8];
@@ -18,7 +18,7 @@ fn byte_to_bits(byte: u8) -> [u8; 8] {
 /// the "property bit". I have named the bytes with their
 /// property bit name.
 #[derive(Debug, PartialEq, Eq)]
-struct ChunkType {
+pub struct ChunkType {
     ancillary_byte:      u8,
     private_byte:        u8,
     reserved_byte:       u8,
