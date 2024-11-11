@@ -1,3 +1,56 @@
+use crate::{chunk::Chunk, chunk_type};
+
+pub const STANDARD_HEADER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
+
+struct Png {
+    signature: [u8; 8],
+    chunks: Vec<Chunk>,
+}
+
+impl Png {
+    fn from_chunks(chunks: Vec<Chunk>) -> Png {
+        todo!()
+    }
+
+    fn append_chunk(&mut self, chunk: Chunk) {
+        todo!()
+    }
+
+    fn remove_first_chunk(&mut self, chunk_type: &str) -> Result<Chunk, &'static str> {
+        todo!()
+    }
+
+    fn header(&self) -> &[u8; 8] {
+        todo!()
+    }
+
+    fn chunks(&self) -> &[Chunk] {
+        todo!()
+    }
+
+    fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
+        todo!()
+    }
+
+    fn as_bytes(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl TryFrom<&[u8]> for Png {
+    type Error = &'static str;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl std::fmt::Display for Png {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
