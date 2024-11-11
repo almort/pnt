@@ -1,7 +1,7 @@
 use std::{fmt::Display};
 use crc::Crc;
 
-use crate::chunk_type::ChunkType;
+use crate::chunk_type::{self, ChunkType};
 
 struct Chunk {
     length:     u32,
@@ -16,19 +16,19 @@ impl Chunk {
     }
 
     fn length(&self) -> u32 {
-        todo!()
+        self.length
     }
 
     fn chunk_type(&self) -> &ChunkType {
-        todo!()
+        &self.chunk_type
     }
 
     fn data(&self) -> &[u8] {
-        todo!()
+        &self.chunk_data
     }
 
     fn crc(&self) -> u32 {
-        todo!()
+        self.crc
     }
 
     fn data_as_string(&self) -> Result<String, &'static str> {
@@ -43,8 +43,48 @@ impl Chunk {
 impl TryFrom<&[u8]> for Chunk {
     type Error = &'static str;
 
-    fn try_from(chunk_data: &[u8]) -> Result<Self, Self::Error> {
-        todo!()
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        let slice_length = value.len();
+
+        let length_slice: [u8; 4] = [
+            value[0],
+            value[1],
+            value[2],
+            value[3]
+        ];
+        let length_from_slice: u32 = u32::from_be_bytes(length_slice);
+
+        let chunk_type_slice: [u8; 4] = [
+            value[4],
+            value[5],
+            value[6],
+            value[7]
+        ];
+        let chunk_type_from_slice: ChunkType = ChunkType::try_from(chunk_type_slice).unwrap();
+
+        let mut chunk_data_vec: Vec<u8> = Vec::new();
+
+        for byte in &value[(slice_length - 8)..(slice_length -4)] {
+            chunk_data_vec.push(*byte)
+        }
+
+        let crc_slice: [u8; 4] = [
+            value[slice_length - 4],
+            value[slice_length - 3],
+            value[slice_length - 2],
+            value[slice_length - 1]
+        ];
+        let crc_from_slice: u32 = u32::from_be_bytes(crc_slice);
+
+        let chunk = Chunk {
+            length: length_from_slice,
+            chunk_type: chunk_type_from_slice,
+            chunk_data: chunk_data_vec,
+            crc: crc_from_slice,
+        };
+
+        Ok(chunk)
+
     }
 }
 
