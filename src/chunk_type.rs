@@ -1,5 +1,5 @@
 use core::str;
-use std::{str::FromStr, u8};
+use std::str::FromStr;
 
 fn byte_to_bits(byte: u8) -> [u8; 8] {
     let mut bits = [0u8; 8];
@@ -27,7 +27,7 @@ pub struct ChunkType {
 
 impl ChunkType {
 
-    fn bytes(&self) -> [u8; 4] {
+    pub fn bytes(&self) -> [u8; 4] {
         let bytes: [u8; 4] = [
             self.ancillary_byte,
             self.private_byte,
@@ -58,7 +58,6 @@ impl ChunkType {
                 continue;
             }
         }
-
     }
 
 
@@ -68,12 +67,10 @@ impl ChunkType {
 
     fn is_public(&self) -> bool {
         self.private_byte.is_ascii_uppercase()
-
     }
 
     fn is_reserved_bit_valid(&self) -> bool {
         self.reserved_byte.is_ascii_uppercase()
-
     }
 
     fn is_safe_to_copy(&self) -> bool {
@@ -86,7 +83,6 @@ impl TryFrom<[u8; 4]> for ChunkType {
     type Error = &'static str;
 
     fn try_from(value: [u8; 4]) -> Result<Self, Self::Error> {
-
         let chunk_type = ChunkType {
             ancillary_byte:     value[0],
             private_byte:       value[1],
@@ -107,7 +103,6 @@ impl TryFrom<[u8; 4]> for ChunkType {
                 continue;
             }
         }
-
     }
 }
 
@@ -122,7 +117,6 @@ impl std::fmt::Display for ChunkType {
 
         write!(f, "{}", s)
     }
-
 }
 
 impl FromStr for ChunkType {
@@ -151,7 +145,6 @@ impl FromStr for ChunkType {
                 continue;
             }
         }
-
     }
 }
 
