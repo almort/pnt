@@ -1,4 +1,4 @@
-use std::fmt::{write, Display};
+use std::fmt::Display;
 use crc::Crc;
 
 use crate::chunk_type::ChunkType;
@@ -82,6 +82,7 @@ impl TryFrom<&[u8]> for Chunk {
             value[2],
             value[3]
         ];
+
         let length_from_slice: u32 = u32::from_be_bytes(length_slice);
 
         let chunk_type_slice: [u8; 4] = [
@@ -90,6 +91,7 @@ impl TryFrom<&[u8]> for Chunk {
             value[6],
             value[7]
         ];
+
         let chunk_type_from_slice: ChunkType = ChunkType::try_from(chunk_type_slice).unwrap();
 
         let mut chunk_data_vec: Vec<u8> = Vec::new();
@@ -129,9 +131,6 @@ impl TryFrom<&[u8]> for Chunk {
         } else {
             Ok(chunk)
         }
-
-
-
     }
 }
 
@@ -167,7 +166,7 @@ mod tests {
             .chain(crc.to_be_bytes().iter())
             .copied()
             .collect();
-        
+
         Chunk::try_from(chunk_data.as_ref()).unwrap()
     }
 
@@ -269,9 +268,9 @@ mod tests {
             .chain(crc.to_be_bytes().iter())
             .copied()
             .collect();
-        
+
         let chunk: Chunk = TryFrom::try_from(chunk_data.as_ref()).unwrap();
-        
+
         let _chunk_string = format!("{}", chunk);
     }
 }
