@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{write, Display};
 use crc::Crc;
 
 use crate::chunk_type::ChunkType;
@@ -48,11 +48,25 @@ impl Chunk {
     }
 
     fn data_as_string(&self) -> Result<String, &'static str> {
-        todo!()
+        let to_stringify: Vec<u8> = self.chunk_data.clone();
+
+        if self.length() == 0 {
+            Err("diocane")
+        } else {
+            Ok(String::from_utf8(to_stringify).unwrap())
+        }
     }
 
     fn as_bytes(&self) -> Vec<u8> {
-        todo!()
+        let bytes: Vec<u8> = self.length()
+            .to_be_bytes()
+            .iter()
+            .chain(self.chunk_type.bytes().iter())
+            .chain(self.chunk_data.iter())
+            .chain(self.crc().to_be_bytes().iter())
+            .copied().collect();
+
+        bytes
     }
 }
 
@@ -80,7 +94,7 @@ impl TryFrom<&[u8]> for Chunk {
 
         let mut chunk_data_vec: Vec<u8> = Vec::new();
 
-        for byte in &value[(slice_length - 8)..(slice_length -4)] {
+        for byte in &value[8..(slice_length -4)] {
             chunk_data_vec.push(*byte)
         }
 
@@ -99,14 +113,36 @@ impl TryFrom<&[u8]> for Chunk {
             crc: crc_from_slice,
         };
 
-        Ok(chunk)
+        let x25: Crc<u32> = Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
+
+        let to_hash: Vec<u8> = chunk.chunk_type
+            .bytes()
+            .iter()
+            .chain(chunk.chunk_data.iter())
+            .copied()
+            .collect();
+
+        let crc_value = x25.checksum(&to_hash);
+
+        if crc_value != chunk.crc {
+            Err("Invalid bytes (probably crc is wrong)")
+        } else {
+            Ok(chunk)
+        }
+
+
 
     }
 }
 
 impl Display for Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        write!(f, "chunk length:{}\nchunk type: {}\n, chunk message {}\nCRC u32: {}",
+            self.length,
+            self.chunk_type,
+            self.data_as_string().unwrap(),
+            self.crc
+        )
     }
 }
 
