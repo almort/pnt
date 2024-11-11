@@ -1,7 +1,7 @@
-use std::{fmt::Display};
+use std::fmt::Display;
 use crc::Crc;
 
-use crate::chunk_type::{self, ChunkType};
+use crate::chunk_type::ChunkType;
 
 struct Chunk {
     length:     u32,
@@ -11,8 +11,24 @@ struct Chunk {
 }
 
 impl Chunk {
-    fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
-        todo!()
+    fn new(chunktype: ChunkType, data: Vec<u8>) -> Chunk {
+        let x25: Crc<u32> = Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
+
+        let to_hash: Vec<u8> = chunktype
+            .bytes()
+            .iter()
+            .chain(&data)
+            .copied()
+            .collect();
+
+        let crc_value = x25.checksum(&to_hash);
+
+        Chunk {
+            length: data.len() as u32,
+            chunk_type: chunktype,
+            chunk_data: data,
+            crc: crc_value,
+        }
     }
 
     fn length(&self) -> u32 {
