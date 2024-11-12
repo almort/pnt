@@ -2,7 +2,7 @@ use std::fmt::Display;
 use crc::Crc;
 
 use crate::chunk_type::ChunkType;
-
+#[derive(Debug)]
 pub struct Chunk {
     length:     u32,
     pub chunk_type: ChunkType,
