@@ -1,7 +1,7 @@
-use std::{collections::VecDeque, vec};
+use std::collections::VecDeque;
 use crc::Crc;
 
-use crate::{chunk::{self, Chunk}, chunk_type::ChunkType};
+use crate::{chunk::{self, Chunk}, chunk_type::{self, ChunkType}};
 
 
 struct Png {
@@ -24,7 +24,25 @@ impl Png {
     }
 
     fn remove_first_chunk(&mut self, chunk_type: &str) -> Result<Chunk, &'static str> {
-        todo!()
+        let mut x = 0;
+        let mut index = 0;
+
+        for chunk in &self.png_chunks {
+            x += 1;
+
+            if chunk.chunk_type.to_string() == *chunk_type.to_string() {
+                index = x - 1;
+                break;
+            } else {
+                continue;
+            }
+        }
+
+        if self.png_chunks[index].chunk_type.to_string() == *chunk_type.to_string() {
+            Ok(self.png_chunks.remove(index))
+        } else {
+            Err("Chunk not found")
+        }
     }
 
     fn header(&self) -> &[u8; 8] {
@@ -36,7 +54,26 @@ impl Png {
     }
 
     fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
-        todo!()
+        let mut x = 0;
+        let mut index = 0;
+
+        for chunk in &self.png_chunks {
+            x += 1;
+
+            if chunk.chunk_type.to_string() == *chunk_type.to_string() {
+                index = x - 1;
+                break;
+            } else {
+                continue;
+            }
+        }
+
+        if self.png_chunks[index].chunk_type.to_string() == *chunk_type.to_string() {
+            Some(&self.png_chunks[index])
+        } else {
+            None
+        }
+
     }
 
     fn as_bytes(&self) -> Vec<u8> {
@@ -155,7 +192,10 @@ impl TryFrom<&[u8]> for Png {
 
 impl std::fmt::Display for Png {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        write!(f, "signature: {:?}\nchunks (as bytes because i'm lazy): {:?}",
+            self.png_signature,
+            self.png_chunks
+        )
     }
 }
 
