@@ -1,19 +1,26 @@
-use crate::{chunk::Chunk, chunk_type};
+use std::{collections::VecDeque, vec};
+use crc::Crc;
 
-pub const STANDARD_HEADER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
+use crate::{chunk::{self, Chunk}, chunk_type::ChunkType};
+
 
 struct Png {
-    signature: [u8; 8],
-    chunks: Vec<Chunk>,
+    png_signature: [u8; 8],
+    png_chunks: Vec<Chunk>,
 }
 
 impl Png {
+    pub const STANDARD_HEADER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
+
     fn from_chunks(chunks: Vec<Chunk>) -> Png {
-        todo!()
+        Png {
+            png_signature: Self::STANDARD_HEADER,
+            png_chunks: chunks,
+        }
     }
 
     fn append_chunk(&mut self, chunk: Chunk) {
-        todo!()
+        self.png_chunks.push(chunk)
     }
 
     fn remove_first_chunk(&mut self, chunk_type: &str) -> Result<Chunk, &'static str> {
@@ -21,11 +28,11 @@ impl Png {
     }
 
     fn header(&self) -> &[u8; 8] {
-        todo!()
+        &self.png_signature
     }
 
     fn chunks(&self) -> &[Chunk] {
-        todo!()
+        &self.png_chunks
     }
 
     fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
@@ -33,15 +40,116 @@ impl Png {
     }
 
     fn as_bytes(&self) -> Vec<u8> {
-        todo!()
+        let mut final_vec: Vec<u8> = Vec::new();
+
+        for i in Self::STANDARD_HEADER {
+            final_vec.push(i)
+        }
+
+        let chunk_bytes: Vec<Vec<u8>> = self.png_chunks
+            .iter()
+            .map(|chunk| chunk.as_bytes())
+            .collect();
+
+        for chunk in chunk_bytes {
+            for byte in chunk {
+                final_vec.push(byte)
+            }
+        }
+
+        final_vec
     }
 }
 
 impl TryFrom<&[u8]> for Png {
     type Error = &'static str;
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        todo!()
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        let mut bytes_vec: VecDeque<u8> = VecDeque::from(bytes.to_owned());
+        let signature: [u8; 8] = [
+            bytes_vec.pop_front().unwrap(),
+            bytes_vec.pop_front().unwrap(),
+            bytes_vec.pop_front().unwrap(),
+            bytes_vec.pop_front().unwrap(),
+            bytes_vec.pop_front().unwrap(),
+            bytes_vec.pop_front().unwrap(),
+            bytes_vec.pop_front().unwrap(),
+            bytes_vec.pop_front().unwrap(),
+        ];
+
+        let mut chunks: Vec<Chunk> = Vec::new();
+
+        while !bytes_vec.is_empty() {
+            let length_bytes: [u8; 4] = [
+                bytes_vec.pop_front().unwrap(),
+                bytes_vec.pop_front().unwrap(),
+                bytes_vec.pop_front().unwrap(),
+                bytes_vec.pop_front().unwrap(),
+            ];
+
+            let length_from_slice: u32 = u32::from_be_bytes(length_bytes);
+
+            let chunk_type_bytes: [u8; 4] = [
+                bytes_vec.pop_front().unwrap(),
+                bytes_vec.pop_front().unwrap(),
+                bytes_vec.pop_front().unwrap(),
+                bytes_vec.pop_front().unwrap(),
+            ];
+
+            let chunk_type_from_slice: ChunkType = ChunkType::try_from(chunk_type_bytes)?;
+
+            let mut data_bytes: Vec<u8> =  Vec::new();
+            for _n in 0..length_from_slice {
+                data_bytes.push(bytes_vec[0]);
+                bytes_vec.pop_front();
+            };
+
+            let crc_bytes: [u8; 4] = [
+                bytes_vec.pop_front().unwrap(),
+                bytes_vec.pop_front().unwrap(),
+                bytes_vec.pop_front().unwrap(),
+                bytes_vec.pop_front().unwrap(),
+            ];
+
+            let chunk_bytes: Vec<u8> = length_bytes
+                .iter()
+                .chain(chunk_type_bytes.iter())
+                .chain(data_bytes.iter())
+                .chain(crc_bytes.iter())
+                .copied()
+                .collect();
+
+            let chunk_while: Chunk = Chunk::try_from(chunk_bytes.as_ref())?;
+
+            let x25: Crc<u32> = Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
+            let to_hash: Vec<u8> = chunk_type_bytes
+                .iter()
+                .chain(data_bytes.iter())
+                .copied()
+                .collect();
+
+            let crc_value = x25.checksum(&to_hash);
+
+            if chunk_while.crc != crc_value {
+                return Err("Not a valid chunk");
+            } else if !chunk_while.chunk_type.is_valid() {
+                return Err("not a valid chunk");
+            } else {
+                chunks.push(chunk_while);
+            }
+        }
+
+        let png = Png {
+            png_signature: signature,
+            png_chunks: chunks,
+        };
+
+        if png.png_signature == Self::STANDARD_HEADER {
+            Ok(png)
+        } else {
+            Err("Not a valid png")
+        }
+
     }
 }
 
@@ -72,7 +180,7 @@ mod tests {
         Png::from_chunks(chunks)
     }
 
-    fn chunk_from_strings(chunk_type: &str, data: &str) -> Result<Chunk> {
+    fn chunk_from_strings(chunk_type: &str, data: &str) -> Result<Chunk, Box<dyn std::error::Error>> {
         use std::str::FromStr;
 
         let chunk_type = ChunkType::from_str(chunk_type)?;
