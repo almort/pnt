@@ -4,7 +4,7 @@ use crc::Crc;
 use crate::{chunk::{self, Chunk}, chunk_type::{self, ChunkType}};
 
 
-struct Png {
+pub struct Png {
     png_signature: [u8; 8],
     png_chunks: Vec<Chunk>,
 }
@@ -19,11 +19,11 @@ impl Png {
         }
     }
 
-    fn append_chunk(&mut self, chunk: Chunk) {
+    pub fn append_chunk(&mut self, chunk: Chunk) {
         self.png_chunks.push(chunk)
     }
 
-    fn remove_first_chunk(&mut self, chunk_type: &str) -> Result<Chunk, &'static str> {
+    pub fn remove_first_chunk(&mut self, chunk_type: &str) -> Result<Chunk, &'static str> {
         let mut x = 0;
         let mut index = 0;
 
@@ -76,7 +76,7 @@ impl Png {
 
     }
 
-    fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self) -> Vec<u8> {
         let mut final_vec: Vec<u8> = Vec::new();
 
         for i in Self::STANDARD_HEADER {

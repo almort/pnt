@@ -4,9 +4,9 @@ use crc::Crc;
 use crate::chunk_type::ChunkType;
 #[derive(Debug)]
 pub struct Chunk {
-    length:     u32,
+    pub length:     u32,
     pub chunk_type: ChunkType,
-    chunk_data: Vec<u8>,
+    pub chunk_data: Vec<u8>,
     pub crc:    u32,
 }
 
@@ -136,7 +136,7 @@ impl TryFrom<&[u8]> for Chunk {
 
 impl Display for Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "chunk length:{}\nchunk type: {}\n, chunk message {}\nCRC u32: {}",
+        write!(f, "chunk length:{}\nchunk type: {}\nchunk message {}\nCRC u32: {}",
             self.length,
             self.chunk_type,
             self.data_as_string().unwrap(),
