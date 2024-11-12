@@ -3,15 +3,15 @@ use crc::Crc;
 
 use crate::chunk_type::ChunkType;
 
-struct Chunk {
+pub struct Chunk {
     length:     u32,
-    chunk_type: ChunkType,
+    pub chunk_type: ChunkType,
     chunk_data: Vec<u8>,
-    crc:        u32,
+    pub crc:    u32,
 }
 
 impl Chunk {
-    fn new(chunktype: ChunkType, data: Vec<u8>) -> Chunk {
+    pub fn new(chunktype: ChunkType, data: Vec<u8>) -> Chunk {
         let x25: Crc<u32> = Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
 
         let to_hash: Vec<u8> = chunktype
@@ -35,7 +35,7 @@ impl Chunk {
         self.length
     }
 
-    fn chunk_type(&self) -> &ChunkType {
+    pub fn chunk_type(&self) -> &ChunkType {
         &self.chunk_type
     }
 
@@ -47,7 +47,7 @@ impl Chunk {
         self.crc
     }
 
-    fn data_as_string(&self) -> Result<String, &'static str> {
+    pub fn data_as_string(&self) -> Result<String, &'static str> {
         let to_stringify: Vec<u8> = self.chunk_data.clone();
 
         if self.length() == 0 {
@@ -57,7 +57,7 @@ impl Chunk {
         }
     }
 
-    fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self) -> Vec<u8> {
         let bytes: Vec<u8> = self.length()
             .to_be_bytes()
             .iter()
