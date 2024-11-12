@@ -38,7 +38,7 @@ impl ChunkType {
         bytes
     }
 
-    fn is_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         let mut x = self.bytes().len();
 
         loop {
