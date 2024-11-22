@@ -4,7 +4,6 @@ mod chunk_type;
 mod commands;
 mod png;
 
-use core::panic;
 use std::io::Read;
 use std::path::PathBuf;
 use std::fs::File;
@@ -26,16 +25,25 @@ fn get_path(path: &str) -> PathBuf {
     image_path
 }
 
-fn encode(path: PathBuf, chunk_type: &str, message: &str) -> Result<()> {
+fn encode(path: PathBuf, chunk_type: &str, message: &str, image_option: &bool) -> Result<()> {
     let mut image = File::open(path)?;
     let mut image_bytes: Vec<u8> = Vec::new();
     image.read_to_end(&mut image_bytes)?;
 
     let mut png = Png::try_from(image_bytes.as_ref())?;
 
-    let chunk = Chunk::new(ChunkType::from_str(chunk_type)?, message.as_bytes().to_vec());
+    if !image_option {
+        let chunk = Chunk::new(ChunkType::from_str(chunk_type)?, message.as_bytes().to_vec());
+        png.append_chunk(chunk);
+    } else {
+        let image_to_message_path = PathBuf::from(message);
+        let mut image_to_message = File::open(image_to_message_path)?;
+        let mut image_to_message_bytes: Vec<u8> = Vec::new();
+        image_to_message.read_to_end(&mut image_to_message_bytes)?;
 
-    png.append_chunk(chunk);
+        let chunk = Chunk::new(ChunkType::from_str(chunk_type)?, image_to_message_bytes);
+        png.append_chunk(chunk);
+    };
 
     let mut new_png = File::create_new("secret.png")?;
     new_png.write_all(png.as_bytes().as_ref())?;
@@ -43,16 +51,22 @@ fn encode(path: PathBuf, chunk_type: &str, message: &str) -> Result<()> {
     Ok(())
 }
 
-fn decode(path: PathBuf, chunk_type: &str) -> Result<()> {
+fn decode(path: PathBuf, chunk_type: &str, image_option: &bool) -> Result<()> {
     let mut image = File::open(path)?;
     let mut image_bytes: Vec<u8> = Vec::new();
     image.read_to_end(&mut image_bytes)?;
 
     let mut png = Png::try_from(image_bytes.as_ref())?;
 
-    let chunk = png.remove_first_chunk(chunk_type)?;
-
-    println!("MESSAGE: {}", chunk.data_as_string().unwrap());
+    if !image_option {
+        let chunk = png.remove_first_chunk(chunk_type)?;
+        println!("MESSAGE: {}", chunk.data_as_string().unwrap());
+    } else {
+        let chunk = png.remove_first_chunk(chunk_type)?;
+        let image_appended = Png::try_from(chunk.chunk_data.as_ref())?;
+        let mut image_appended_writed = File::create("decoded.png")?;
+        image_appended_writed.write_all(&image_appended.as_bytes())?;
+    };
 
     Ok(())
 }
@@ -71,8 +85,8 @@ fn main() -> Result<()> {
     let path = get_path(&args.input_file.unwrap());
 
     match args.mode {
-        Mode::Encode    => encode(path, &args.chunk_type.unwrap(), &args.message.unwrap())?,
-        Mode::Decode    => decode(path, &args.chunk_type.unwrap())?,
+        Mode::Encode    => encode(path, &args.chunk_type.unwrap(), &args.message.unwrap(), &args.image)?,
+        Mode::Decode    => decode(path, &args.chunk_type.unwrap(), &args.image)?,
         Mode::Print     => todo!(),
         Mode::Remove    => todo!(),
         _               => Err("not a valid mode")?

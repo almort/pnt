@@ -14,6 +14,12 @@ pub struct Args {
     pub input_file: Option<String>,
 
     #[arg(
+        long,
+        required = true,
+    )]
+    pub image: bool,
+
+    #[arg(
         short,
         long,
         required_if_eq("mode", "Mode::Encode"),
